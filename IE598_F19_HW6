@@ -1,0 +1,80 @@
+import time
+from sklearn import datasets
+import numpy as np
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeClassifier
+import pandas as pd
+
+data = pd.read_csv("F:/MSFE/semester 1/machine learning in Fin lab/HW6/ccdefault.csv")
+
+#Part 1: Random test train splits
+
+# Create feature and target arrays
+X = data.iloc[:, 1:24].values
+y = data['DEFAULT']
+
+train_acc = []
+test_acc = []
+
+print('start_1', time.process_time())
+
+for i in range(1, 11):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=i, stratify=y)
+
+    # Standardizing the features:
+    sc = StandardScaler()
+    sc.fit(X_train)
+    X_train_std = sc.transform(X_train)
+    X_test_std = sc.transform(X_test)
+
+    ## Building a decision tree
+    tree = DecisionTreeClassifier()
+    tree.fit(X_train_std, y_train)
+    y_train_pred = tree.predict(X_train_std)
+    y_test_pred = tree.predict(X_test_std)
+    train_acc.append(accuracy_score(y_train, y_train_pred))
+    test_acc.append(accuracy_score(y_test, y_test_pred))
+
+print('end_1', time.process_time())
+
+print('Accuracy scores for training set:{}'.format(train_acc))
+print('Accuracy scores for test set:{}'.format(test_acc))
+print('Mean of accuracy scores for training set:{}'.format(np.mean(train_acc)))
+print('Mean of accuracy scores for test set:{}'.format(np.mean(test_acc)))
+print('Standard deviation of accuracy scores for training set:{}'.format(np.std(train_acc)))
+print('Standard deviation of accuracy scores for test set:{}'.format(np.std(test_acc)))
+
+#Part 2: Cross validation
+
+print('start_2', time.process_time())
+
+# Standardizing the features:
+sc = StandardScaler()
+sc.fit(X)
+X_std = sc.transform(X)
+
+## Building a decision tree
+tree = DecisionTreeClassifier()
+tree.fit(X_std, y)
+
+CV_scores = cross_val_score(tree, X_std, y, cv=10,
+                                scoring='accuracy',
+                                n_jobs=-1)
+
+print('end_2', time.process_time())
+
+# Compute the mean and the standard deviation
+CV_mean = CV_scores.mean()
+CV_std = CV_scores.std()
+
+# Print
+print('The individual fold accuracy scores:', [float('{}'.format(i)) for i in CV_scores])
+print('CV mean: ', CV_mean)
+print('CV standard deviation: ', CV_std)
+
+print("My name is Yunxian Duan")
+print("My NetID is: yunxian2")
+print("I hereby certify that I have read the University policy on Academic Integrity and that I am not in violation.")

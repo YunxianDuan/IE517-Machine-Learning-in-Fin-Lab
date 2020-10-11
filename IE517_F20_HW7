@@ -1,0 +1,79 @@
+import time
+from sklearn import datasets
+import numpy as np
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
+
+data = pd.read_csv("F:/MSFE/semester 1/machine learning in Fin lab/HW7/ccdefault.csv")
+
+#Part 1: Random forest estimators
+
+# Create feature and target arrays
+X = data.iloc[:, 1:24].values
+y = data['DEFAULT']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, stratify=y)
+
+# Standardizing the features:
+sc = StandardScaler()
+sc.fit(X_train)
+X_train_std = sc.transform(X_train)
+X_test_std = sc.transform(X_test)
+
+estimators = [5, 15, 25, 50, 100, 200]
+CV_train = []
+CV_test = []
+
+for i in estimators:
+
+    start_time = time.process_time()
+
+    forest = RandomForestClassifier(n_estimators=i)
+    forest.fit(X_train_std, y_train)
+    CV_train_scores = cross_val_score(forest, X_train_std, y_train, cv=10, scoring='accuracy', n_jobs=-1)
+    CV_test_scores = cross_val_score(forest, X_test_std, y_test, cv=10, scoring='accuracy', n_jobs=-1)
+
+    end_time = time.process_time()
+
+    # Compute the mean
+    CV_train_mean = CV_train_scores.mean()
+    CV_train.append(CV_train_mean)
+    CV_test_mean = CV_test_scores.mean()
+    CV_test.append(CV_test_mean)
+
+    print('N_estimators: ', i)
+    print('time: ', end_time-start_time, 's')
+    print('In sample accuracy: ', CV_train_mean)
+    print('Out of sample accuracy: ', CV_test_mean)
+
+print(CV_train)
+print(CV_test)
+
+#Part 2: Random forest feature importance
+
+feat_labels = data.columns[1:-1]
+
+forest = RandomForestClassifier(n_estimators=200)
+forest.fit(X_train_std, y_train)
+importances = forest.feature_importances_
+indices = np.argsort(importances)[::-1]
+xlabel = []
+
+for f in range(X_train_std.shape[1]):
+    xlabel.append(feat_labels[indices[f]])
+    print("%2d) %-*s %f" % (f+1, 30, feat_labels[indices[f]], importances[indices[f]]))
+
+plt.title('Feature Importance')
+plt.bar(range(X_train_std.shape[1]), importances[indices], align='center')
+plt.xticks(range(X_train_std.shape[1]), xlabel, rotation=90)
+plt.xlim([-1, X_train_std.shape[1]])
+plt.tight_layout()
+plt.show()
+
+print("My name is Yunxian Duan")
+print("My NetID is: yunxian2")
+print("I hereby certify that I have read the University policy on Academic Integrity and that I am not in violation.")
